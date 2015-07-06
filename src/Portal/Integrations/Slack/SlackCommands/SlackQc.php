@@ -2,6 +2,7 @@
 namespace Portal\Integrations\Slack\SlackCommands;
 
 use Illuminate\Support\Facades\Queue;
+use Portal\Integrations\Slack\Classes\SlackNotification;
 use Portal\Integrations\Slack\Contracts\SlackCommand;
 
 class SlackQc extends SlackCommand
@@ -38,7 +39,8 @@ class SlackQc extends SlackCommand
     protected function sendMessage($to, $message)
     {
         Queue::push(function($job) use($to, $message) {
-            $this->slack
+            $slack = SlackNotification::create();
+            $slack
                 ->to($to)
                 ->from('Quality Control')
                 ->withIcon('http://a5.mzstatic.com/us/r30/Purple5/v4/77/7d/87/777d8753-c206-a335-7f33-04435931634f/icon175x175.jpeg')

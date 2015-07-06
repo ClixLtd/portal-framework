@@ -21,6 +21,7 @@ class AddPackout extends Command implements SelfHandling, ShouldBeQueued
 
     public function handle()
     {
+        $this->slack            = SlackNotification::create();
         $this->todayInformation->pack_outs       = $this->todayInformation->pack_outs + 1;
         $this->todayInformation->save();
 
@@ -58,7 +59,6 @@ class AddPackout extends Command implements SelfHandling, ShouldBeQueued
     public function __construct(Carbon $date, $agent, $user)
     {
         $this->todayInformation = DailyResults::firstOrCreate(['today' => Carbon::now()->format('Y-m-d')]);
-        $this->slack            = SlackNotification::create();
         $this->agent            = $agent;
         $this->slackUser        = $user;
     }
