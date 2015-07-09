@@ -43,41 +43,6 @@ class SendScriptResults extends Command implements SelfHandling, ShouldBeQueued 
 
 
 
-        $dr = new Collection();
-        if (!is_null($response->supression))
-        {
-            $sr = new Collection();
-            $scriptResults->each(function($r) use($response, &$sr, &$dr) {
-
-
-                $count = Supression::where('number', '<>', 0)->where('type', $response->supression)->whereIn('number', [
-                    $r['client.telephone'],
-                    $r['client.mobile'],
-                ])->count();
-
-                if ($count == 0)
-                {
-                    $sr->push($r);
-                } else {
-                    $dr->push($r);
-                }
-
-            });
-            $scriptResults = $sr;
-        }
-
-        $sendSettings = json_decode($response->send_settings, true);
-        $sendSettings['subject'] = "SUPPRESSED: " . $sendSettings['subject'];
-        $sendSettings['filename'] = "SUPPRESSED-" . $sendSettings['filename'];
-
-        if (count($dr) > 0)
-        {
-            try {
-                $dr->toEmail($sendSettings);
-            } catch(\ErrorException $e) {
-
-            }
-        }
 
         if (!is_null($response->filter)) {
             $scriptResults = $scriptResults->filter(
@@ -173,6 +138,41 @@ class SendScriptResults extends Command implements SelfHandling, ShouldBeQueued 
             foreach ($questions as $question)
             {
                 $transformer[$question] = $question;
+            }
+        }
+
+
+
+        $dr = new Collection();
+        if (!is_null($response->supression))
+        {
+            $sr = new Collection();
+            $scriptResults->each(function($r) use($response, &$sr, &$dr) {
+
+                $count = Supression::where('number', '<>', 0)->where('type', $response->supression)->where('number', $r['client.landline-mobile'])->count();
+
+                if ($count == 0)
+                {
+                    $sr->push($r);
+                } else {
+                    $dr->push($r);
+                }
+
+            });
+            $scriptResults = $sr;
+        }
+
+        $sendSettings = json_decode($response->send_settings, true);
+        $sendSettings['subject'] = "SUPPRESSED: " . $sendSettings['subject'];
+        $sendSettings['filename'] = "SUPPRESSED-" . $sendSettings['filename'];
+
+        if (count($dr) > 0)
+        {
+            try {
+                $nr = $dr->transformWithHeadings($transformer);
+                $nr->toEmail($sendSettings);
+            } catch(\ErrorException $e) {
+                dd($e->getCode(), $e->getMessage(), $e->getLine(), $e->getFile());
             }
         }
 
