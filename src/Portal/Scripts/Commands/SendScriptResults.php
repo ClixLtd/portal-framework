@@ -43,10 +43,10 @@ class SendScriptResults extends Command implements SelfHandling, ShouldBeQueued 
 
 
 
+        $dr = new Collection();
         if (!is_null($response->supression))
         {
             $sr = new Collection();
-            $dr = new Collection();
             $scriptResults->each(function($r) use($response, &$sr, &$dr) {
 
 
