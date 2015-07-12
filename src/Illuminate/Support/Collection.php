@@ -101,7 +101,11 @@ class Collection extends BaseCollection
     {
         $excel = Excel::create($filename, function ($excel) use ($password) {
             $excel->sheet('Results', function ($sheet) use ($password) {
-                $sheet->fromArray($this->toArray());
+                $sheet->freezeFirstRow();
+                $sheet->setAutoFilter();
+
+
+                $sheet->fromArray($this->zeroMissingHeaders()->toArray());
                 if (!is_null($password)) {
                     $sheet->protect($password);
                 }
@@ -109,6 +113,42 @@ class Collection extends BaseCollection
         });
 
         return $export ? $excel->export('xls') : $excel->store('xls', storage_path($this->excelStoragePath));
+    }
+
+    public function zeroMissingHeaders()
+    {
+        $finishedArray = new Collection();
+
+        $allHeaders = [];
+
+        foreach ($this as $key => $values)
+        {
+            foreach (array_keys($values) as $saveKey)
+            {
+                $allHeaders[] = $saveKey;
+            }
+        }
+
+        $allHeaders = array_unique($allHeaders);
+
+        foreach ($this as $key => $item)
+        {
+            $returnItem = [];
+            foreach ($allHeaders as $header)
+            {
+                if (!isset($item[$header]))
+                {
+                    $item[$header] = 0;
+                }
+
+                $returnItem[$header] = $item[$header];
+            }
+
+            $finishedArray->push($returnItem);
+        }
+
+
+        return $finishedArray;
     }
 
     public function transformWithHeadings($headings)
