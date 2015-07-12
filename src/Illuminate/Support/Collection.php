@@ -9,6 +9,29 @@ class Collection extends BaseCollection
 
     protected $excelStoragePath = 'emails/foundation/collection/toemail';
 
+
+    public function mergeAndKeep($newData)
+    {
+
+        foreach (array_keys($newData->toArray()) as $key)
+        {
+            if (isset($this[$key]))
+            {
+                $theseDetails = $newData[$key];
+                $thoseDetails = $this[$key];
+
+                $finalMerge = array_merge($theseDetails, $thoseDetails);
+
+                $this[$key] = $finalMerge;
+            } else {
+                $this->put($key, $newData[$key]);
+            }
+
+        }
+
+        return $this;
+    }
+
     public function limit($top, $start = null)
     {
         if ($top == 0 && is_null($start)) {
