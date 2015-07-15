@@ -10,6 +10,38 @@ class Collection extends BaseCollection
     protected $excelStoragePath = 'emails/foundation/collection/toemail';
 
 
+    protected $errorLeads = null;
+
+    public function toIntegration($integration)
+    {
+        $integrationClass = "\\MySecurePortal\\Classes\\Leads\\Integrations\\" . $integration['class'];
+        $postedResults = new Collection();
+        $this->errorLeads = new Collection();
+        $this->each(function ($item) use ($integration, $integrationClass, &$postedResults) {
+
+            $int = $integrationClass::withOptionsAndLead($integration, $item);
+            $int->send();
+
+            if ($int->isValid)
+            {
+                $item['result'] = $int->getResult();
+                $postedResults->push($item);
+            } else {
+                $item['result'] = $int->getError();
+                $this->errorLeads->push($item);
+            }
+
+        });
+
+        return $postedResults;
+    }
+
+    public function getIntegrationErrors()
+    {
+        return $this->errorLeads;
+    }
+    
+
     public function mergeAndKeep($newData)
     {
 
