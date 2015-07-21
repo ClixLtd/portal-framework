@@ -13,7 +13,7 @@ class CreditAlert extends Command implements SelfHandling, ShouldQueue
 
     use SerializesModels, InteractsWithQueue;
 
-    protected $rooms = ['developers'];
+    protected $rooms = ['directors-chat'];
     protected $slack = null;
     protected $amountAvailable;
 
@@ -34,17 +34,11 @@ class CreditAlert extends Command implements SelfHandling, ShouldQueue
         array_walk($this->rooms, function($channel) use ($message) {
             $this->slack->from('MySecurePortal')
                 ->to($channel)
-                ->setAttachments([
-                    SlackNotification::attachment([
-                        'title' => 'Credit Alert',
-                        'text' => $message,
-                        'color' => '#FACC37',
-                        'mrkdwn_in' => [
-                            'title', 'text'
-                        ]
-                    ])
-                ])
-                ->send($message);
+                ->withIcon('http://www.helpyourselfgetlucky.com/wp-content/uploads/2008/04/no-money.gif')
+                ->send(
+                    preg_replace("/(?<=^|(?<=[^a-zA-Z0-9-_\.]))(@\w+)/", "<$1>",
+                        "@andrew @simonskinner \n {$message}"
+                    ));
         });
     }
 

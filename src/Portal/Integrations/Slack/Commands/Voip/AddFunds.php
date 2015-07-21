@@ -20,7 +20,6 @@ class AddFunds extends Command implements SelfHandling, ShouldQueue
     public function __construct($amountAvailable)
     {
         $this->amountAvalilbe = $amountAvailable;
-        dd($amountAvailable);
     }
 
 
