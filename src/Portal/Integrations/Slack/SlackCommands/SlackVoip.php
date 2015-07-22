@@ -32,14 +32,14 @@ class SlackVoip extends SlackCommand
             ->orderBy('created_at','desc')
             ->first(['balance', 'created_at']);
 
-        return 'The last funds for "' . $provider->name . '" was £' . $funds->balance/100 . ' this was taken at ' . $funds->created_at->format('H:i');
+        return 'The last funds form "' . $provider->name . '" was £' . $funds->balance/100 . ' this was taken at ' . $funds->created_at->format('H:i');
     }
 
     public function callTopup()
     {
 
         if(!is_numeric($this->splitText[0]) || strpos($this->splitText[0], '.') === false) {
-            return 'top-up amount must be a number or isn\'t a decimal';
+            return 'top-up amount must be a decimal number';
         }
 
         $providerNameOrId = empty($this->splitText[1])?1:$this->splitText[1];
@@ -48,6 +48,7 @@ class SlackVoip extends SlackCommand
             ->orWhere('slug', $providerNameOrId)
             ->first(['id', 'name']);
 
+        // --
         if(is_null($provider)) {
             return 'Unable to find provider "' . $providerNameOrId . '"';
         }
@@ -58,7 +59,15 @@ class SlackVoip extends SlackCommand
             'created_at' => Carbon::now(),
         ]);
 
-        return "top-up has been registered with '{$provider->name}' of £" . $this->splitText[0];
+        $formatted = number_format($this->splitText[0], 2);
+        \Mail::send('emails.voip.credit_topup', ['amount' => $formatted], function($m)  {
+            $m->to('creditalert@nexbridge.co.uk')
+                ->from('s.skinner@contactrate.co.uk')
+                ->cc('a.brooke@contactrate.co.uk')
+                ->subject('Credit PrePayment');
+        });
+
+        return "top-up has been registered with '{$provider->name}' of £{$formatted}";
 
     }
 
