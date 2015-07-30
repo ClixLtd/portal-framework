@@ -93,7 +93,7 @@ class SlackSurvey extends SlackCommand
             ]);
 
             Queue::push(function($job) use($sendResults, $results, $usergroup, $room) {
-                $this->slack
+                SlackNotification::create()
                     ->to(!is_null($room) ? $room : $this->channelId)
                     ->from('Survey Team')
                     ->withIcon('http://www.yarramsc.vic.edu.au/wp-content/uploads/2012/07/Survey-Icon.png')
@@ -159,7 +159,7 @@ class SlackSurvey extends SlackCommand
         ]);
 
         Queue::push(function($job) use($to, $fullResults, $partialResults) {
-            $this->slack
+            SlackNotification::create()
                 ->to($to)
                 ->from('Survey Team')
                 ->withIcon('http://www.yarramsc.vic.edu.au/wp-content/uploads/2012/07/Survey-Icon.png')

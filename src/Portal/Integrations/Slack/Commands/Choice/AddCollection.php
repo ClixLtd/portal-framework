@@ -22,6 +22,7 @@ class AddCollection extends Command implements SelfHandling, ShouldBeQueued
 
     public function handle()
     {
+        $this->slack            = SlackNotification::create();
         $this->todayInformation->collected       = $this->todayInformation->collected + 1;
         $this->todayInformation->collected_value = $this->todayInformation->collected_value + $this->value;
         $this->todayInformation->save();
@@ -63,7 +64,6 @@ class AddCollection extends Command implements SelfHandling, ShouldBeQueued
     public function __construct(Carbon $date, $value, $user)
     {
         $this->todayInformation = DailyResults::firstOrCreate(['today' => Carbon::now()->format('Y-m-d')]);
-        $this->slack            = SlackNotification::create();
         $this->value            = $value;
         $this->slackUser        = $user;
     }

@@ -76,8 +76,6 @@ class SlackCommand extends Command implements SelfHandling, ShouldBeQueued
 
     public function __construct(array $settings)
     {
-        $this->slack = SlackNotification::create();
-
         $this->token = $settings['token'];
         $this->channelName = $settings['channelName'];
         $this->channelId = $settings['channelId'];

@@ -9,6 +9,61 @@ class Collection extends BaseCollection
 
     protected $excelStoragePath = 'emails/foundation/collection/toemail';
 
+
+    protected $errorLeads = null;
+
+    public function toIntegration($integration)
+    {
+        $integrationClass = "\\MySecurePortal\\Classes\\Leads\\Integrations\\" . $integration['class'];
+        $postedResults = new Collection();
+        $this->errorLeads = new Collection();
+        $this->each(function ($item) use ($integration, $integrationClass, &$postedResults) {
+
+            $int = $integrationClass::withOptionsAndLead($integration, $item);
+            $int->send();
+
+            if ($int->isValid)
+            {
+                $item['result'] = $int->getResult();
+                $postedResults->push($item);
+            } else {
+                $item['result'] = $int->getError();
+                $this->errorLeads->push($item);
+            }
+
+        });
+
+        return $postedResults;
+    }
+
+    public function getIntegrationErrors()
+    {
+        return $this->errorLeads;
+    }
+    
+
+    public function mergeAndKeep($newData)
+    {
+
+        foreach (array_keys($newData->toArray()) as $key)
+        {
+            if (isset($this[$key]))
+            {
+                $theseDetails = $newData[$key];
+                $thoseDetails = $this[$key];
+
+                $finalMerge = array_merge($theseDetails, $thoseDetails);
+
+                $this[$key] = $finalMerge;
+            } else {
+                $this->put($key, $newData[$key]);
+            }
+
+        }
+
+        return $this;
+    }
+
     public function limit($top, $start = null)
     {
         if ($top == 0 && is_null($start)) {
@@ -101,7 +156,11 @@ class Collection extends BaseCollection
     {
         $excel = Excel::create($filename, function ($excel) use ($password) {
             $excel->sheet('Results', function ($sheet) use ($password) {
-                $sheet->fromArray($this->toArray());
+                $sheet->freezeFirstRow();
+                $sheet->setAutoFilter();
+
+
+                $sheet->fromArray($this->zeroMissingHeaders()->toArray());
                 if (!is_null($password)) {
                     $sheet->protect($password);
                 }
@@ -109,6 +168,42 @@ class Collection extends BaseCollection
         });
 
         return $export ? $excel->export('xls') : $excel->store('xls', storage_path($this->excelStoragePath));
+    }
+
+    public function zeroMissingHeaders()
+    {
+        $finishedArray = new Collection();
+
+        $allHeaders = [];
+
+        foreach ($this as $key => $values)
+        {
+            foreach (array_keys($values) as $saveKey)
+            {
+                $allHeaders[] = $saveKey;
+            }
+        }
+
+        $allHeaders = array_unique($allHeaders);
+
+        foreach ($this as $key => $item)
+        {
+            $returnItem = [];
+            foreach ($allHeaders as $header)
+            {
+                if (!isset($item[$header]))
+                {
+                    $item[$header] = 0;
+                }
+
+                $returnItem[$header] = $item[$header];
+            }
+
+            $finishedArray->push($returnItem);
+        }
+
+
+        return $finishedArray;
     }
 
     public function transformWithHeadings($headings)

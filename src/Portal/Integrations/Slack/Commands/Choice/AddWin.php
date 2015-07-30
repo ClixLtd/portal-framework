@@ -24,6 +24,7 @@ class AddWin extends Command implements SelfHandling, ShouldBeQueued
 
     public function handle()
     {
+        $this->slack            = SlackNotification::create();
         $this->todayInformation->wins       = $this->todayInformation->wins + 1;
         $this->todayInformation->win_value  = $this->todayInformation->win_value + $this->value;
         $this->todayInformation->fees_due   = $this->todayInformation->fees_due + $this->feeDue;
@@ -68,7 +69,6 @@ class AddWin extends Command implements SelfHandling, ShouldBeQueued
     public function __construct(Carbon $date, $value, $user, $winPercentage = 30)
     {
         $this->todayInformation = DailyResults::firstOrCreate(['today' => Carbon::now()->format('Y-m-d')]);
-        $this->slack            = SlackNotification::create();
         $this->value            = $value;
         $this->winPercentage    = $winPercentage;
         $this->slackUser        = $user;

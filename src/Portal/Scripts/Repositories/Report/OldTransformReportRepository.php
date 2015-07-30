@@ -3,6 +3,9 @@
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use IlluminateExtensions\Support\Collection;
+use MySecurePortal\OldPortal\Domain\Companies\Models\ExternalAgent;
+use MySecurePortal\OldPortal\Domain\Vicidial\Models\VicidialUsers;
+use Pheanstalk\Exception;
 use Portal\Scripts\Contracts\ReportRepository;
 
 class OldTransformReportRepository implements ReportRepository {
@@ -12,6 +15,56 @@ class OldTransformReportRepository implements ReportRepository {
     function __construct(ReportRepository $repository)
     {
         $this->repository = $repository;
+    }
+
+    public function getSurveyDailyReport(Carbon $startDate, Carbon $endDate)
+    {
+        $returnResults = [];
+        $results = $this->repository->getSurveyDailyReport($startDate, $endDate);
+
+        foreach ($results as $type => $list)
+        {
+            $list->each(function ($item) use ($type, &$returnResults) {
+                try {
+
+                    $agentDetails = !is_null($item->company->dialler_database) ? VicidialUsers::on($item->company->dialler_database)->find($item->agent_id) : ExternalAgent::find($item->agent_id);
+                    $agentLookup = empty($agentDetails) ? null : $agentDetails->full_name . "-" . $item->company_id;
+
+                    if (!empty($agentLookup))
+                    {
+                        if (!isset($returnResults[$agentLookup]))
+                        {
+                            $returnResults[$agentLookup] = [
+                                'Agent Name' => isset($agentDetails->full_name) ? $agentDetails->full_name : 'Dunno' ,
+                                'Company' => $item->company->company_name,
+                                'Today Complete' => 0,
+                                'Today Partial' => 0,
+                                'Today Rejected-tps' => 0,
+                                'This Week Complete' => 0,
+                                'This Week Partial' => 0,
+                                'This Week Rejected-tps' => 0,
+                                'This Month Complete' => 0,
+                                'This Month Partial' => 0,
+                                'This Month Rejected-tps' => 0,
+                            ];
+                        }
+
+                        $thisUpdateName = $type . " " . ucwords(strtolower($item->status));
+
+                        $returnResults[$agentLookup][$thisUpdateName] = $returnResults[$agentLookup][$thisUpdateName] + 1;
+                    }
+
+                } catch(\ErrorException $e) {
+
+                    dd($e);
+
+                }
+            });
+        }
+
+        return (new Collection($returnResults))->sortByDesc(function($r) {
+            return $r['Today Complete'];
+        });
     }
 
     /**
@@ -172,6 +225,7 @@ class OldTransformReportRepository implements ReportRepository {
     {
         $results = $this->repository->getSurveyCountByAgentId($agentId, $dateFrom, $dateTo);
 
+        dd($results);
 
         $returnResult = [];
         foreach ($results as $r)
