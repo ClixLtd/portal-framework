@@ -12,8 +12,13 @@ class Collection extends BaseCollection
 
     protected $errorLeads = null;
 
-    public function toIntegration($integration)
+    public function toIntegration($integration, $order = [])
     {
+
+        if(!empty($order)) {
+            $this->order($order);
+        }
+
         $integrationClass = "\\MySecurePortal\\Classes\\Leads\\Integrations\\" . $integration['class'];
         $postedResults = new Collection();
         $this->errorLeads = new Collection();
@@ -126,8 +131,13 @@ class Collection extends BaseCollection
         return $postedResults;
     }
 
-    public function toEmail(array $settings, $xls = true)
+    public function toEmail(array $settings, $xls = true, $order = [])
     {
+
+        if(!empty($order)) {
+            $this->order($order);
+        }
+
         \Mail::send('portal::emails.foundation.collection.toemail', [
             'title' => $settings['subject'],
             'total' => $this->count(),
@@ -239,6 +249,24 @@ class Collection extends BaseCollection
 
 
     }
+
+    protected function order(Array $order)
+    {
+        $newOrder = [];
+
+        $this->each(function($item, $key) use($order, &$newOrder){
+            if(!isset($newOrder[$key])) {
+                $newOrder[$key] = [];
+            }
+
+            foreach($order as $index) {
+                $newOrder[$key][$index] = isset($item[$index])?$item[$index]:'';
+            }
+        });
+
+        $this->items = $newOrder;
+    }
+
 
 
 }
