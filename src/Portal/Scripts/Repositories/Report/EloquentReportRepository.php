@@ -112,4 +112,9 @@ class EloquentReportRepository implements ReportRepository {
     {
         // TODO: Implement getSurveyCountByAgentId() method.
     }
+
+    public function getSurveyDailyReport(Carbon $startDate, Carbon $endDate)
+    {
+        // TODO: Implement getSurveyDailyReport() method.
+    }
 }
