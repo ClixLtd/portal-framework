@@ -243,6 +243,7 @@ class Collection extends BaseCollection
     public function toCsv($filename, $export = true)
     {
         $csv = \League\Csv\Writer::createFromFileObject(new \SplTempFileObject());
+        $csv->setNewline("\r\n");
         $csv->insertAll($this->toArray());
 
         return $export ? $csv->__toString() : file_put_contents(storage_path($this->excelStoragePath) .'/'. $filename . '.csv', $csv->__toString());
