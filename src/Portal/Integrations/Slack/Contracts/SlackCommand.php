@@ -65,7 +65,7 @@ class SlackCommand extends Command implements SelfHandling, ShouldBeQueued
     public static function __callStatic($name, $args)
     {
         $name = "call" . ucwords(strtolower($name));
-        $thisClass = new Static($args[0]);
+        $thisClass = new static($args[0]);
 
         if (!method_exists($thisClass, $name)) {
             return $thisClass->callHelp();
