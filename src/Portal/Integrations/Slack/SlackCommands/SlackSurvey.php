@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Queue;
 use IlluminateExtensions\Support\Collection;
 use MySecurePortal\OldPortal\Classes\Dashboard\Reports\Surveys;
+use MySecurePortal\OldPortal\Domain\Vicidial\Models\VicidialLog;
+use MySecurePortal\OldPortal\Models\Criteria\HotkeyLog;
 use MySecurePortal\OldPortal\Models\Vicidial\AgentGroups;
 use Portal\Integrations\Slack\Classes\SlackNotification;
 use Portal\Integrations\Slack\Contracts\SlackCommand;
@@ -81,7 +83,7 @@ class SlackSurvey extends SlackCommand
                 ]);
 
                 $fieldHolder[] = SlackNotification::attachmentField([
-                    'value' => $single['full'] . ' full, ' . $single['part'] . ' partials.',
+                    'value' => $single['full'] . ' Full, ' . $single['part'] . ' Partials, ' . $single['transfers'] . ' Transfers.',
                     'short' => true,
                 ]);
             }
@@ -110,12 +112,16 @@ class SlackSurvey extends SlackCommand
         $startDate = is_null($startDate) ? Carbon::now()->hour(0)->minute(0)->second(0) : $startDate;
         $endDate = is_null($endDate) ? Carbon::now()->hour(23)->minute(59)->second(59) : $endDate;
 
+        $hotkeyStatuses = HotkeyLog::distinct()->get(['reference'])->map(function($item, $key) {
+            return substr($item->reference, 0, 6);
+        });
+
         $cache = App::make('cache.store');
 
         return $cache->remember(
             "agentLeaderboard-{$userGroup}-{$limit}-{$startDate}-{$endDate}",
             5,
-            function() use($userGroup, $startDate, $endDate, $limit) {
+            function() use($userGroup, $startDate, $endDate, $limit, $hotkeyStatuses) {
                 $group = AgentGroups::with('agents', 'agents.scriptlog')->find($userGroup);
 
                 if (!isset($group->agents))
@@ -126,11 +132,18 @@ class SlackSurvey extends SlackCommand
                 {
                     $fullSurveyCount = $agent->scriptlog()->whereBetween('completed_at', [$startDate, $endDate])->where('status', 'COMPLETE')->count();
                     $partialSurveyCount = $agent->scriptlog()->whereBetween('completed_at', [$startDate, $endDate])->where('status', 'PARTIAL')->count();
+                    $transfers = VicidialLog::whereBetween('call_date', [$startDate, $endDate])
+                        ->where('user', $agent->username)
+                        ->whereIn('status', $hotkeyStatuses)
+                        ->groupBy(['phone_number', 'status'])
+                        ->get(['phone_number', 'status'])
+                        ->count();
 
                     $results[] = [
                         'name' => $agent->full_name,
                         'full' => $fullSurveyCount,
                         'part' => $partialSurveyCount,
+                        'transfers' => $transfers,
                     ];
                 }
 
