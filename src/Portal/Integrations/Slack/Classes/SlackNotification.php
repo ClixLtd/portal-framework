@@ -28,7 +28,7 @@ class SlackNotification implements Notification {
 
     public static function create()
     {
-        $thisClass = new Static();
+        $thisClass = new static();
 
         return $thisClass->slack;
     }
