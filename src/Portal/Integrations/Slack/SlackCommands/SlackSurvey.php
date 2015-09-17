@@ -133,10 +133,10 @@ class SlackSurvey extends SlackCommand
                     $fullSurveyCount = $agent->scriptlog()->whereBetween('completed_at', [$startDate, $endDate])->where('status', 'COMPLETE')->count();
                     $partialSurveyCount = $agent->scriptlog()->whereBetween('completed_at', [$startDate, $endDate])->where('status', 'PARTIAL')->count();
                     $transfers = VicidialLog::whereBetween('call_date', [$startDate, $endDate])
-                        ->where('user', $agent->username)
+                        ->where('user', $agent->user)
                         ->whereIn('status', $hotkeyStatuses)
-                        ->groupBy(['phone_number', 'status'])
-                        ->get(['phone_number', 'status'])
+                        ->groupBy(['phone_number', 'status', 'user'])
+                        ->get(['phone_number', 'status', 'user'])
                         ->count();
 
                     $results[] = [
