@@ -13,7 +13,7 @@ class CreditAlert extends Command implements SelfHandling, ShouldQueue
 
     use SerializesModels, InteractsWithQueue;
 
-    protected $rooms = ['directors-chat'];
+    protected $rooms = ['directors'];
     protected $slack = null;
     protected $amountAvailable;
 
