@@ -11,8 +11,7 @@ class SlackQc extends SlackCommand
     protected function getHelp()
     {
         return [
-            ['survey [message]', 'Sends an anonymous message to the survey campaign.'],
-            ['managers [message]', 'Sends an anonymous message to the managers campaign.'],
+            ['room [roomname] [message]', 'Sends an anonymous message to the room name specified campaign.'],
         ];
     }
 
@@ -32,6 +31,18 @@ class SlackQc extends SlackCommand
             return "You need to enter a message to be sent. Example: `/qc managers Hello to the managers`";
 
         $this->sendMessage('call-centre-managers', $this->text);
+
+        return "Message will be sent!";
+    }
+
+    public function callRoom()
+    {
+        $splitMessage = explode(' ', $this->text);
+
+        if (strlen($splitMessage[1]) < 1)
+            return "You need to enter a message to be sent. Example: `/qc managers Hello to the managers`";
+
+        $this->sendMessage($splitMessage[0], $splitMessage[1]);
 
         return "Message will be sent!";
     }
