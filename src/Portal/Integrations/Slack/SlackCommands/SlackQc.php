@@ -38,11 +38,13 @@ class SlackQc extends SlackCommand
     public function callRoom()
     {
         $splitMessage = explode(' ', $this->text);
+        $room = array_shift($splitMessage);
+        $message = implode(' ', $splitMessage);
 
-        if (strlen($splitMessage[1]) < 1)
+        if (strlen($message) < 1)
             return "You need to enter a message to be sent. Example: `/qc managers Hello to the managers`";
 
-        $this->sendMessage($splitMessage[0], $splitMessage[1]);
+        $this->sendMessage($room, $message);
 
         return "Message will be sent!";
     }
